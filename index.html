@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Bus Pass Journey Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f3ef;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    border-bottom: 4px solid #d4a847;
+  }
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-inner h1 {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .header-inner p { color: #f0c96a; font-size: 0.78rem; margin-top: 2px; font-weight: 300; }
+  .pass-pill {
+    margin-left: auto;
+    background: #d4a847;
+    color: #1a2744;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  main { max-width: 720px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .info-banner {
+    background: linear-gradient(135deg, #1e7b6e, #145f55);
+    color: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .info-banner strong { color: #f0c96a; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+    border: 1px solid #e0dbd3;
+  }
+
+  .card-title { font-size: 1rem; font-weight: 600; color: #1a2744; margin-bottom: 16px; }
+
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .ex-btn {
+    background: #f5f3ef;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    color: #555;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .ex-btn:hover { background: white; border-color: #1e7b6e; color: #1e7b6e; }
+
+  .field-group { margin-bottom: 14px; }
+  .field-group label {
+    display: block;
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #1a2744;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+  .field-group input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 9px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fdfaf5;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field-group input[type=text]:focus { border-color: #1e7b6e; background: white; }
+
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width: 480px) { .input-row { grid-template-columns: 1fr; } }
+
+  .swap-row { text-align: center; margin: 4px 0 10px; }
+  .swap-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid #ddd;
+    background: #f5f3ef;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+  .swap-btn:hover { background: #1e7b6e; color: white; border-color: #1e7b6e; transform: rotate(180deg); }
+
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 14px;
+    background: #f5f3ef;
+    border-radius: 9px;
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+    color: #555;
+  }
+  .options label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .options input[type=checkbox] { accent-color: #1e7b6e; width: 15px; height: 15px; }
+
+  .plan-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1e7b6e, #2a9d8a);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(30,123,110,0.3);
+    transition: all 0.2s;
+  }
+  .plan-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(30,123,110,0.35); }
+  .plan-btn:disabled { background: #aaa; box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .loading {
+    text-align: center;
+    padding: 30px 20px;
+    color: #666;
+    font-size: 0.9rem;
+    display: none;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e0dbd3;
+    border-top-color: #1e7b6e;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    background: #fff5f5;
+    border: 1.5px solid #f0b0b0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #c94f4f;
+    font-size: 0.88rem;
+    display: none;
+    margin-top: 12px;
+  }
+
+  /* RESULTS */
+  .results { display: none; }
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .results-title { font-size: 1.1rem; font-weight: 600; color: #1a2744; }
+  .results-sub { font-size: 0.8rem; color: #777; margin-top: 2px; }
+  .free-pill {
+    background: #e8f7f5;
+    color: #1e7b6e;
+    border: 1px solid #1e7b6e;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #e0dbd3;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .sum-cell {
+    background: #f5f3ef;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .sum-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #1e7b6e; }
+  .sum-value { font-size: 0.95rem; font-weight: 600; color: #1a2744; margin-top: 2px; }
+  .sum-value.free { color: #1e7b6e; }
+
+  .leg {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0ece4;
+  }
+  .leg:last-child { border-bottom: none; }
+  .leg-line {
+    display: flex; flex-direction: column; align-items: center;
+    width: 22px; flex-shrink: 0; padding-top: 2px;
+  }
+  .dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    border: 2.5px solid #1e7b6e;
+    background: white;
+    flex-shrink: 0;
+  }
+  .dot.walk { border-color: #999; }
+  .dot.end { border-color: #d4a847; }
+  .vline {
+    width: 1px; flex: 1; min-height: 20px;
+    border-left: 1.5px dashed #ddd;
+    margin: 3px 0;
+  }
+  .leg-body { flex: 1; }
+  .leg-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
+  .badge {
+    font-size: 0.7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge.bus { background: #e3f0fe; color: #1a5fa8; }
+  .badge.walk { background: #f0f0f0; color: #555; }
+  .badge.transfer { background: #fce8e8; color: #a82020; }
+  .leg-time { font-size: 0.78rem; color: #888; }
+  .leg-operator { font-size: 0.72rem; color: #aaa; }
+  .leg-route { font-size: 0.9rem; font-weight: 600; color: #1a1a1a; }
+  .leg-desc { font-size: 0.8rem; color: #666; margin-top: 2px; }
+
+  .tip-box {
+    background: #fffbef;
+    border: 1px solid #d4a847;
+    border-left: 4px solid #d4a847;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    margin-top: 16px;
+    font-size: 0.84rem;
+    line-height: 1.65;
+    color: #333;
+  }
+  .tip-box strong { color: #8a6500; }
+
+  .disclaimer {
+    margin-top: 14px;
+    font-size: 0.75rem;
+    color: #999;
+    line-height: 1.6;
+    padding: 10px 12px;
+    background: #f5f3ef;
+    border-radius: 8px;
+  }
+  .disclaimer strong { color: #555; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span style="font-size:1.8rem">🚌</span>
+    <div>
+      <h1>Free Pass Journey Planner</h1>
+      <p>Plan free travel across England with your bus pass</p>
+    </div>
+    <div class="pass-pill">🎫 ENCTS</div>
+  </div>
+</header>
+
+<main>
+  <div class="info-banner">
+    With an <strong>ENCTS bus pass</strong> you travel <strong>free on all local buses</strong> in England — after 9:30am on weekdays, and all day on weekends &amp; bank holidays. Enter your journey below to find a completely free route.
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 Plan your journey</div>
+
+    <div class="examples">
+      <button class="ex-btn" onclick="fill('London Victoria','Oxford City Centre')">🏛️ London → Oxford</button>
+      <button class="ex-btn" onclick="fill('Brighton','Worthing')">🌊 Brighton → Worthing</button>
+      <button class="ex-btn" onclick="fill('Manchester','Chester')">🏰 Manchester → Chester</button>
+      <button class="ex-btn" onclick="fill('Bristol','Bath')">🛁 Bristol → Bath</button>
+      <button class="ex-btn" onclick="fill('Birmingham','Stratford-upon-Avon')">🎭 Birmingham → Stratford</button>
+    </div>
+
+    <div class="input-row">
+      <div class="field-group">
+        <label>From</label>
+        <input type="text" id="from" placeholder="e.g. London Victoria" />
+      </div>
+      <div class="field-group">
+        <label>To</label>
+        <input type="text" id="to" placeholder="e.g. Oxford" />
+      </div>
+    </div>
+
+    <div class="swap-row">
+      <button class="swap-btn" onclick="swap()" title="Swap">⇅</button>
+    </div>
+
+    <div class="options">
+      <label><input type="checkbox" id="wknd"> Weekend / bank holiday</label>
+      <label><input type="checkbox" id="slow"> Fewer changes (slower OK)</label>
+      <label><input type="checkbox" id="access"> Wheelchair accessible</label>
+    </div>
+
+    <button class="plan-btn" id="planBtn" onclick="plan()">🗺️ Find my free route</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      Searching for your free route...
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="card results" id="results">
+    <div class="results-header">
+      <div>
+        <div class="results-title" id="rTitle"></div>
+        <div class="results-sub" id="rSub"></div>
+      </div>
+      <div class="free-pill">✓ 100% Free</div>
+    </div>
+    <div class="summary-row" id="rSummary"></div>
+    <div id="rLegs"></div>
+    <div class="tip-box" id="rTip"></div>
+    <div class="disclaimer">
+      <strong>Important:</strong> Free travel is after 9:30am Mon–Fri and all day weekends &amp; bank holidays on local scheduled services. Always verify timetables at <strong>traveline.info</strong> or call <strong>0871 200 2233</strong> before travelling.
+    </div>
+  </div>
+</main>
+
+<script>
+  function fill(f, t) {
+    document.getElementById('from').value = f;
+    document.getElementById('to').value = t;
+  }
+
+  function swap() {
+    var f = document.getElementById('from');
+    var t = document.getElementById('to');
+    var tmp = f.value; f.value = t.value; t.value = tmp;
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideAll() {
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  async function plan() {
+    var from = document.getElementById('from').value.trim();
+    var to   = document.getElementById('to').value.trim();
+    if (!from || !to) { showError('Please enter both a starting point and destination.'); return; }
+
+    hideAll();
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('planBtn').disabled = true;
+
+    try {
+      var resp = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: from,
+          to: to,
+          weekend: document.getElementById('wknd').checked,
+          slow: document.getElementById('slow').checked,
+          accessible: document.getElementById('access').checked
+        })
+      });
+
+      var j = await resp.json();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('planBtn').disabled = false;
+
+      if (!resp.ok) { showError(j.error || 'Something went wrong. Please try again.'); return; }
+      if (!j.possible) { showError(j.reason || 'Journey not feasible by free local bus only.'); return; }
+
+      render(j);
+    } catch (e) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('planBtn').disabled = false;
+      showError(e.message || 'Something went wrong. Please try again.');
+    }
+  }
+
+  function render(j) {
+    document.getElementById('rTitle').textContent = j.from + ' → ' + j.to;
+    document.getElementById('rSub').textContent = (j.difficulty || 'Journey') + ' · All free with your bus pass';
+
+    document.getElementById('rSummary').innerHTML =
+      cell('Total time', j.totalTime) +
+      cell('Changes', j.changes) +
+      cell('Walking', (j.walkingMinutes || 0) + ' min') +
+      '<div class="sum-cell"><div class="sum-label">Cost</div><div class="sum-value free">FREE 🎫</div></div>';
+
+    var legs = j.legs || [];
+    var html = '';
+    legs.forEach(function(leg, i) {
+      var isLast = i === legs.length - 1;
+      var bc = leg.type === 'walk' ? 'walk' : leg.type === 'transfer' ? 'transfer' : 'bus';
+      var bl = leg.type === 'walk' ? '🚶 Walk' : leg.type === 'transfer' ? '🔄 Change' : '🚌 Bus' + (leg.routeNumber ? ' ' + leg.routeNumber : '');
+      html += '<div class="leg">';
+      html += '<div class="leg-line"><div class="dot ' + bc + '"></div>' + (isLast ? '' : '<div class="vline"></div>') + '</div>';
+      html += '<div class="leg-body">';
+      html += '<div class="leg-top"><span class="badge ' + bc + '">' + bl + '</span>' + (leg.departTime ? '<span class="leg-time">' + leg.departTime + '</span>' : '') + (leg.operator ? '<span class="leg-operator">' + leg.operator + '</span>' : '') + '</div>';
+      html += '<div class="leg-route">' + leg.from + ' → ' + leg.to + '</div>';
+      html += '<div class="leg-desc">' + leg.description + ' · ' + leg.duration + '</div>';
+      html += '</div></div>';
+    });
+    html += '<div class="leg"><div class="leg-line"><div class="dot end"></div></div><div class="leg-body"><div class="leg-route" style="color:#1e7b6e">🏁 Arrived: ' + j.to + '</div><div class="leg-desc">Completely free with your bus pass!</div></div></div>';
+    document.getElementById('rLegs').innerHTML = html;
+
+    document.getElementById('rTip').innerHTML = '<strong>💡 Tip:</strong> ' + (j.topTip || '') + (j.note ? '<br><br><strong>ℹ️ Note:</strong> ' + j.note : '');
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cell(label, value) {
+    return '<div class="sum-cell"><div class="sum-label">' + label + '</div><div class="sum-value">' + value + '</div></div>';
+  }
+</script>
+</body>
+</html>

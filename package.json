@@ -1,0 +1,6 @@
+{
+  "name": "free-bus-pass-planner",
+  "version": "1.0.0",
+  "description": "Free bus pass journey planner for ENCTS pass holders in England",
+  "private": true
+}
